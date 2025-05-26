@@ -13,9 +13,8 @@ from friend_module import (
     list_friend_requests, list_friends,
     show_friend_list_with_availability
 )
-from group_module import (
-    render_group_management_ui
-)
+from group_module import render_group_management_ui
 from storage_module import get_df, save_df
+
 import pandas as pd
 from datetime import date
