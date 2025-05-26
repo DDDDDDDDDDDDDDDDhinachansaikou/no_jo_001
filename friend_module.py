@@ -117,23 +117,33 @@ def show_friends_availability(user_id):
                 )
                 st.plotly_chart(fig, use_container_width=True)
 
-def show_friend_list_with_availability(current_user):
-    friends = list_friends(current_user)
+def show_friend_list_with_availability(user_id):
+    df = get_df()
+    friends = list_friends(user_id)
+
     if not friends:
         st.info("您目前尚無好友")
     else:
-        st.markdown("### 好友清單（點擊展開空閒時間）")
-        if "friend_view_states" not in st.session_state:
-            st.session_state.friend_view_states = {}
-        df = get_df()
-        for friend in friends:
-            if friend not in st.session_state.friend_view_states:
-                st.session_state.friend_view_states[friend] = False
+        selected_friend = st.selectbox("選擇好友查看空閒時間", friends)
 
-            with st.expander(f"{friend}", expanded=st.session_state.friend_view_states[friend]):
-                friend_data = df[df['user_id'] == friend]
-                display_calendar_view(friend)
-                if not friend_data.empty:
-                    dates = friend_data.iloc[0]['available_dates']
+        if selected_friend:
+            friend_data = df[df["user_id"] == selected_friend]
+
+            try:
+                display_calendar_view(selected_friend)
+            except Exception as e:
+                st.error(f"{selected_friend} 的日曆顯示失敗：{e}")
+
+            if not friend_data.empty:
+                dates = friend_data.iloc[0].get("available_dates", "")
+                if not isinstance(dates, str):
+                    dates = ""
+                date_list = [d.strip() for d in dates.split(",") if d.strip()]
+                if date_list:
+                    st.markdown(f"**空閒時間**：{'、'.join(date_list)}")
+                else:
+                    st.info("尚未登記可用時間")
+            else:
+                st.warning("找不到該使用者資料")
                     date_list = [d.strip() for d in dates.split(',')] if dates else []
                     st.markdown(f" **空閒時間**：{'、'.join(date_list) if date_list else '尚未登記'}")
