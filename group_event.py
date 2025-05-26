@@ -4,11 +4,12 @@ from storage_module import get_event_rows, add_event_row, update_event_participa
 def render_group_events_ui(group_name, user_id):
     st.markdown("### 群組活動／日程表")
 
-    # 新增活動
-    with st.expander("建立新活動"):
+    # 改用表單或直接顯示，避免 expander 裡包 expander
+    with st.form(key=f"event_form_{group_name}"):
         event_title = st.text_input("活動標題", key=f"event_title_{group_name}")
         event_date = st.date_input("活動日期", key=f"event_date_{group_name}")
-        if st.button("建立活動", key=f"create_event_{group_name}"):
+        submit_btn = st.form_submit_button("建立活動", use_container_width=True)
+        if submit_btn:
             if event_title:
                 add_event_row(group_name, event_title, event_date, user_id)
                 st.success("活動建立成功")
@@ -47,5 +48,5 @@ def render_group_events_ui(group_name, user_id):
                 st.success("已標記不參加")
                 st.rerun()
         with col3:
-            st.markdown(f"✅ 參加：{', '.join(yes_list) if yes_list else '無'}")
-            st.markdown(f"❌ 不參加：{', '.join(no_list) if no_list else '無'}")
+            st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
+            st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
