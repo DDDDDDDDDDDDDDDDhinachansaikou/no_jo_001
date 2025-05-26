@@ -13,26 +13,26 @@ def create_group(user_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
 
-    if not group_name.strip():
-        return False, "群組名稱不能為空"
+    # 檢查群組名稱是否已存在
+    existing_groups = set()
+    for g in df["groups"].dropna():
+        existing_groups.update(g.split(","))
+    if group_name in existing_groups:
+        return False, "該群組名稱已存在"
 
-    all_group_names = set()
-    for entry in df["groups"].fillna(""):
-        all_group_names.update(g.strip() for g in entry.split(",") if g.strip())
-    if group_name in all_group_names:
-        return False, "群組名稱已存在"
-
-    idx = df[df['user_id'] == user_id].index[0]
-    current_groups = set(df.at[idx, 'groups'].split(',')) if df.at[idx, 'groups'] else set()
-    current_groups.add(group_name)
-    df.at[idx, 'groups'] = ','.join(sorted(current_groups))
-
-    entry = f"|{group_name}:{user_id}"
-    if entry not in df.at[idx, 'group_members']:
-        df.at[idx, 'group_members'] += entry
+    # 為該用戶新增群組
+    for i in df.index:
+        if df.at[i, "user_id"] == user_id:
+            groups = df.at[i, "groups"]
+            group_members = df.at[i, "group_members"]
+            new_groups = ",".join(sorted(set(groups.split(",") + [group_name]) if groups else [group_name]))
+            new_members = ",".join(sorted(set(group_members.split(",") + [user_id]) if group_members else [user_id]))
+            df.at[i, "groups"] = new_groups
+            df.at[i, "group_members"] = new_members
+            break
 
     save_df(df)
-    return True, f"群組「{group_name}」建立成功，並已自動加入群組"
+    return True, "建立群組成功"
 
 def invite_friend_to_group(user_id, friend_id, group_name):
     df = get_df()
