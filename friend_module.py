@@ -1,9 +1,12 @@
-from calendar_tools import display_calendar_view
+from calendar_module import display_calendar_view
 from storage_module import get_df, save_df
+import streamlit as st
+import pandas as pd
+import plotly.graph_objects as go
+from datetime import datetime, timedelta
 
 def send_friend_request(current_user, target_user):
     df = get_df()
-    # 取得目前使用者的好友列表（清理空白）
     curr_friends_raw = df.loc[df['user_id'] == current_user, 'friends'].values[0]
     curr_friends_set = set(f.strip() for f in curr_friends_raw.split(',') if f.strip())
 
@@ -11,8 +14,6 @@ def send_friend_request(current_user, target_user):
         st.info("你們已經是好友")
         return
 
-
-    
     if target_user not in df['user_id'].values:
         return "使用者不存在"
 
@@ -66,14 +67,6 @@ def list_friends(user_id):
     friends = df.at[idx, 'friends']
     return sorted(list(filter(None, friends.split(','))))
 
-
-import streamlit as st
-
-# calendar version
-
-import plotly.graph_objects as go
-from datetime import datetime, timedelta
-
 def show_friends_availability(user_id):
     df = get_df()
     idx = df[df['user_id'] == user_id].index[0]
@@ -119,7 +112,6 @@ def show_friends_availability(user_id):
                     height=300
                 )
                 st.plotly_chart(fig, use_container_width=True)
-
 
 def show_friend_list_with_availability(current_user):
     friends = list_friends(current_user)
