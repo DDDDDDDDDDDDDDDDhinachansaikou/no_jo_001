@@ -153,6 +153,7 @@ def render_group_management_ui(user_id):
         st.error(msg)
 
 
+
     st.subheader("邀請好友加入群組")
     friend_to_invite = st.text_input("好友 ID", key="friend_invite_input")
     group_target = st.selectbox("選擇要加入的群組", list(groups.keys()) if groups else [], key="group_invite_target")
