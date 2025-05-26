@@ -193,11 +193,16 @@ def render_group_management_ui(user_id):
 
     st.subheader("邀請好友加入群組")
     friend_to_invite = st.text_input("好友 ID", key="friend_invite_input")
-    group_target = st.selectbox("選擇要加入的群組", list(groups.keys()) if groups else [], key="group_invite_target")
-    if st.button("邀請好友"):
-        success, msg = invite_friend_to_group(user_id, friend_to_invite, group_target)
-        st.success(msg) if success else st.error(msg)
 
+    group_choices = list(groups.keys()) if groups else []
+    if group_choices:
+        group_target = st.selectbox("選擇要加入的群組", group_choices, key="group_invite_target")
+        if st.button("邀請好友"):
+            success, msg = invite_friend_to_group(user_id, friend_to_invite, group_target)
+            st.success(msg) if success else st.error(msg)
+    else:
+        st.info("您目前沒有任何群組，請先建立群組才能邀請好友加入")
+        
     st.markdown("---")
     st.subheader("移除群組成員")
     if groups:
