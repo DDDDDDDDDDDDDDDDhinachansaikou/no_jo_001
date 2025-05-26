@@ -4,7 +4,7 @@ import time
 # 每 10 秒自動刷新頁面
 if "last_refresh_time" not in st.session_state:
     st.session_state.last_refresh_time = time.time()
-elif time.time() - st.session_state.last_refresh_time > 10:
+elif time.time() - st.session_state.last_refresh_time > 60:
     st.session_state.last_refresh_time = time.time()
     st.rerun()
 
