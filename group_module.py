@@ -9,6 +9,22 @@ def ensure_group_columns(df):
         df['group_members'] = ''
     return df
 
+# 工具函式：解析與重組 group_members 欄位
+def parse_group_members(members_str):
+    group_map = {}
+    if members_str:
+        entries = [s for s in members_str.split('|') if s]
+        for entry in entries:
+            if ':' not in entry:
+                continue
+            group, members = entry.split(':', 1)
+            member_list = [m.strip() for m in members.split(',') if m.strip()]
+            group_map[group] = set(member_list)
+    return group_map
+
+def to_group_members_str(group_map):
+    return ''.join(f'|{g}:{",".join(sorted(mems))}' for g, mems in group_map.items() if mems)
+
 def create_group(user_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
@@ -20,15 +36,18 @@ def create_group(user_id, group_name):
     if group_name in existing_groups:
         return False, "該群組名稱已存在"
 
-    # 為該用戶新增群組
+    # 為用戶新增群組到 groups 與 group_members
     for i in df.index:
         if df.at[i, "user_id"] == user_id:
+            # 更新 groups
             groups = df.at[i, "groups"]
-            group_members = df.at[i, "group_members"]
-            new_groups = ",".join(sorted(set(groups.split(",") + [group_name]) if groups else [group_name]))
-            new_members = ",".join(sorted(set(group_members.split(",") + [user_id]) if group_members else [user_id]))
-            df.at[i, "groups"] = new_groups
-            df.at[i, "group_members"] = new_members
+            group_set = set(groups.split(",")) if groups else set()
+            group_set.add(group_name)
+            df.at[i, "groups"] = ",".join(sorted(group_set))
+            # 更新 group_members
+            group_map = parse_group_members(df.at[i, "group_members"])
+            group_map.setdefault(group_name, set()).add(user_id)
+            df.at[i, "group_members"] = to_group_members_str(group_map)
             break
 
     save_df(df)
@@ -51,59 +70,28 @@ def invite_friend_to_group(current_user, friend_id, group_name):
     current_row = df[df["user_id"] == current_user]
     if current_row.empty:
         return False, "當前使用者不存在"
-
     current_friends_raw = current_row["friends"].values[0]
     current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
     if friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
     # 檢查對方是否已在群組中
-    group_members = friend_row["group_members"].values[0]
-    is_in_group = False
-    if group_members:
-        entries = [s for s in group_members.split('|') if s]
-        for entry in entries:
-            if ':' not in entry:
-                continue
-            gname, members = entry.split(':', 1)
-            member_list = [m.strip() for m in members.split(',') if m.strip()]
-            if gname == group_name and friend_id in member_list:
-                is_in_group = True
-                break
-    if is_in_group:
+    group_map = parse_group_members(friend_row["group_members"].values[0])
+    if group_name in group_map and friend_id in group_map[group_name]:
         return False, "對方已經在該群組中"
 
-    # ✅ 執行「實際加入」的動作
-    # 1. 更新 groups 欄
+    # 更新 groups 欄
     idx = friend_row.index[0]
     groups = df.at[idx, "groups"]
     group_set = set(groups.split(",")) if groups else set()
     group_set.add(group_name)
     df.at[idx, "groups"] = ",".join(sorted(group_set))
 
-    # 2. 更新 group_members 欄
-    members_str = df.at[idx, "group_members"]
-    # 解析 group_members 欄位
-    group_map = {}
-    if members_str:
-        for entry in members_str.split('|'):
-            if not entry or ':' not in entry:
-                continue
-            g, members = entry.split(':', 1)
-            member_list = [m.strip() for m in members.split(',') if m.strip()]
-            group_map[g] = set(member_list)
-    # 更新本群組成員
-    if group_name in group_map:
-        group_map[group_name].add(friend_id)
-    else:
-        group_map[group_name] = {friend_id}
-    # 重新組合 group_members 字串
-    group_members_new = ""
-    for g, mems in group_map.items():
-        group_members_new += f"|{g}:{','.join(sorted(mems))}"
-    df.at[idx, "group_members"] = group_members_new
+    # 更新 group_members 欄
+    group_map = parse_group_members(df.at[idx, "group_members"])
+    group_map.setdefault(group_name, set()).add(friend_id)
+    df.at[idx, "group_members"] = to_group_members_str(group_map)
 
-    # 3. 存回
     save_df(df)
     return True, "邀請成功，好友已加入群組"
 
@@ -128,14 +116,20 @@ def remove_member_from_group(user_id, group_name, target_id):
         return False, "成員不存在"
 
     idx = df[df['user_id'] == target_id].index[0]
-    group_list = set(df.at[idx, 'groups'].split(',')) if df.at[idx, 'groups'] else set()
 
+    # 1. 移除 groups 欄位的群組
+    group_list = set(df.at[idx, 'groups'].split(',')) if df.at[idx, 'groups'] else set()
     if group_name in group_list:
         group_list.remove(group_name)
         df.at[idx, 'groups'] = ','.join(sorted(group_list))
 
-    member_entry = f"|{group_name}:{target_id}"
-    df.at[idx, 'group_members'] = df.at[idx, 'group_members'].replace(member_entry, '')
+    # 2. 更新 group_members 欄位
+    group_map = parse_group_members(df.at[idx, 'group_members'])
+    if group_name in group_map:
+        group_map[group_name].discard(target_id)
+        if not group_map[group_name]:
+            del group_map[group_name]
+    df.at[idx, 'group_members'] = to_group_members_str(group_map)
 
     save_df(df)
     return True, f"{target_id} 已從群組 {group_name} 中移除"
@@ -144,49 +138,41 @@ def delete_group(group_name):
     df = get_df()
     df = ensure_group_columns(df)
     for idx, row in df.iterrows():
+        # 1. 移除 groups 欄
         groups = set(row['groups'].split(',')) if row['groups'] else set()
         if group_name in groups:
             groups.remove(group_name)
             df.at[idx, 'groups'] = ','.join(sorted(groups))
-
-        members = row['group_members']
-        df.at[idx, 'group_members'] = '|'.join(
-            [entry for entry in members.split('|') if not entry.startswith(f"{group_name}:")]
-        )
-
+        # 2. 移除 group_members 欄
+        group_map = parse_group_members(row['group_members'])
+        if group_name in group_map:
+            del group_map[group_name]
+        df.at[idx, 'group_members'] = to_group_members_str(group_map)
     save_df(df)
     return True, f"群組 {group_name} 已刪除"
 
 def show_group_availability(group_map):
     st.subheader("群組成員空閒時間")
-
     if not group_map:
         st.info("你目前沒有加入任何群組")
         return
-
     group_names = list(group_map.keys())
     selected_group = st.selectbox("選擇群組", group_names, key="group_selector")
-
     members = group_map.get(selected_group, [])
     if not members:
         st.info("這個群組尚無其他成員")
         return
-
     selected_user = st.selectbox("選擇要查看的成員", members, key=f"user_selector_{selected_group}")
-
     if st.session_state.get("last_calendar_group") != selected_group or st.session_state.get("last_calendar_user") != selected_user:
         for suffix in ["show_year", "show_month", "last_click"]:
             st.session_state.pop(f"{selected_user}_{suffix}", None)
         st.session_state["last_calendar_group"] = selected_group
         st.session_state["last_calendar_user"] = selected_user
-
     display_calendar_view(selected_user)
 
 def render_group_management_ui(user_id):
     st.subheader("所屬群組與成員")
-
     groups = list_groups_for_user(user_id)
-
     if not groups:
         st.info("您尚未加入任何群組")
     else:
@@ -204,15 +190,12 @@ def render_group_management_ui(user_id):
         else:
             st.error(msg)
 
-
-
     st.subheader("邀請好友加入群組")
     friend_to_invite = st.text_input("好友 ID", key="friend_invite_input")
     group_target = st.selectbox("選擇要加入的群組", list(groups.keys()) if groups else [], key="group_invite_target")
     if st.button("邀請好友"):
         success, msg = invite_friend_to_group(user_id, friend_to_invite, group_target)
         st.success(msg) if success else st.error(msg)
-        
 
     st.markdown("---")
     st.subheader("移除群組成員")
