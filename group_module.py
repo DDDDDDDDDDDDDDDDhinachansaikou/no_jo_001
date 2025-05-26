@@ -146,7 +146,7 @@ def render_group_management_ui(user_id):
     st.subheader("建立新群組")
     new_group = st.text_input("群組名稱", key="new_group_input")
     if st.button("建立群組"):
-    success, msg = create_group(user_id, new_group)
+        success, msg = create_group(user_id, new_group)
     if success:
         st.success(msg)
     else:
