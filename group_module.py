@@ -34,7 +34,7 @@ def create_group(user_id, group_name):
     save_df(df)
     return True, "建立群組成功"
 
-def invite_to_group(current_user, friend_id, group_name):
+def invite_friend_to_group(current_user, friend_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
 
