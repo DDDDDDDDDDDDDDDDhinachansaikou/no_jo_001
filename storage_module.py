@@ -7,14 +7,19 @@ import time
 
 SHEET_NAME = "meeting_records"
 
-secrets = st.secrets["gspread"]
-credentials = service_account.Credentials.from_service_account_info(secrets)
-scoped_credentials = credentials.with_scopes([
-    "https://www.googleapis.com/auth/spreadsheets",
-    "https://www.googleapis.com/auth/drive"
-])
-client = gspread.authorize(scoped_credentials)
-sheet = client.open(SHEET_NAME).sheet1
+try:
+    secrets = st.secrets["gspread"]
+    credentials = service_account.Credentials.from_service_account_info(secrets)
+    scoped_credentials = credentials.with_scopes([
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive"
+    ])
+    client = gspread.authorize(scoped_credentials)
+    sheet = client.open(SHEET_NAME).sheet1
+except Exception as e:
+    st.error(f"❌ Google Sheets 初始化失敗：{e}")
+    st.stop()
+
 
 @st.cache_data(ttl=60)
 def get_df():
