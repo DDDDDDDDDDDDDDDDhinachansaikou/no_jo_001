@@ -64,6 +64,7 @@ def add_event_row(group_name, event_title, event_date, created_by, event_summary
         if col not in df.columns:
             df[col] = ""
     new_row = {
+        "row_type": "event",    
         "group_name": group_name,
         "event_title": event_title,
         "event_date": event_date,
