@@ -51,7 +51,12 @@ def render_ui():
             success, msg = register_user(uid, pw)
             if success:
                 st.success(msg)
+                if "last_refresh_time" not in st.session_state:
+                    st.session_state.last_refresh_time = time.time()
+                elif time.time() - st.session_state.last_refresh_time > 1:
+                    st.session_state.last_refresh_time = time.time()
                 st.session_state.page = "登入"
+                st.rerun()
             else:
                 st.error(msg)
 
@@ -64,6 +69,10 @@ def render_ui():
                 st.session_state.authenticated = True
                 st.session_state.user_id = uid
                 st.success("登入成功")
+                if "last_refresh_time" not in st.session_state:
+                    st.session_state.last_refresh_time = time.time()
+                elif time.time() - st.session_state.last_refresh_time > 1:
+                    st.session_state.last_refresh_time = time.time()
                 st.session_state.page = "登入成功"
                 st.session_state.rerun_triggered = False
                 st.rerun()
