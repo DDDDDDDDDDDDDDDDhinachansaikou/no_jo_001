@@ -62,7 +62,7 @@ def add_event_row(group_name, event_title, event_date, created_by, event_summary
         "participants_yes": "",
         "participants_no": ""
     }
-    df = df.append(new_row, ignore_index=True)
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     save_df(df)
 
 
