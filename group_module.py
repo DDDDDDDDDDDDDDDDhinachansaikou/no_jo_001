@@ -2,6 +2,7 @@ import streamlit as st
 from storage_module import get_df, save_df
 from calendar_module import display_calendar_view
 from confirm_dialog_module import confirm_action
+from group_event import render_group_events_ui
 
 def ensure_group_columns(df):
     if 'groups' not in df.columns:
@@ -234,3 +235,8 @@ def render_group_management_ui(user_id):
 
     else:
         st.info("您尚未加入任何群組")
+for gname, members in groups.items():
+    st.markdown(f"#### {gname}")
+    st.markdown(f"成員：{', '.join(members)}")
+    with st.expander(f"【{gname}】活動／日程表"):
+        render_group_events_ui(gname, user_id)
