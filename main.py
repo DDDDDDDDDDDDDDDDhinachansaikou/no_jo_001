@@ -1,5 +1,4 @@
 import streamlit as st
-from ui_module import render_ui
 
-# 啟動畫面
-render_ui()
+st.title("🧪 測試中")
+st.write("✅ main.py 已成功啟動！")
