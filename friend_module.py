@@ -145,5 +145,5 @@ def show_friend_list_with_availability(user_id):
                     st.info("尚未登記可用時間")
             else:
                 st.warning("找不到該使用者資料")
-                    date_list = [d.strip() for d in dates.split(',')] if dates else []
-                    st.markdown(f" **空閒時間**：{'、'.join(date_list) if date_list else '尚未登記'}")
+                date_list = [d.strip() for d in dates.split(',')] if dates else []
+                st.markdown(f" **空閒時間**：{'、'.join(date_list) if date_list else '尚未登記'}")
