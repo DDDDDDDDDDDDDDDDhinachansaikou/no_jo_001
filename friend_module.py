@@ -6,24 +6,28 @@ import plotly.graph_objects as go
 from datetime import datetime, timedelta
 
 def send_friend_request(current_user, target_user):
+    if current_user == target_user:
+        return "不能傳送好友申請給自己"
+
     df = get_df()
-    curr_friends_raw = df.loc[df['user_id'] == current_user, 'friends'].values[0]
-    curr_friends_set = set(f.strip() for f in curr_friends_raw.split(',') if f.strip())
+
+    if target_user not in df["user_id"].values:
+        return "該使用者不存在"
+
+    curr_friends_raw = df.loc[df["user_id"] == current_user, "friends"].values[0]
+    curr_friends_set = set(f.strip() for f in curr_friends_raw.split(",") if f.strip())
 
     if target_user in curr_friends_set:
-        st.info("你們已經是好友")
-        return
+        return "對方已經是你的好友"
 
-    if target_user not in df['user_id'].values:
-        return "使用者不存在"
+    target_requests = df.loc[df["user_id"] == target_user, "friend_requests"].values[0]
+    target_requests_set = set(target_requests.split(",")) if target_requests else set()
 
-    target_requests = df.loc[df['user_id'] == target_user, 'friend_requests'].values[0]
-    target_requests_set = set(target_requests.split(',')) if target_requests else set()
     if current_user in target_requests_set:
-        return "已發送好友申請，請等待回應"
+        return "已送出好友申請 請等待對方回應"
 
     target_requests_set.add(current_user)
-    df.loc[df['user_id'] == target_user, 'friend_requests'] = ','.join(sorted(target_requests_set))
+    df.loc[df["user_id"] == target_user, "friend_requests"] = ",".join(sorted(target_requests_set))
     save_df(df)
     return "好友申請已送出"
 
