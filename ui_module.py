@@ -4,7 +4,7 @@ def render_ui():
     import pandas as pd
     from availability import update_availability, find_users_by_date
     from storage_module import get_df
-    import friend_module
+    from friend_module import send_friend_request, accept_friend_request, reject_friend_request, list_friend_requests, list_friends, show_friends_availability, show_friend_list_with_availability
     from group_module import render_group_management_ui
     from calendar_module import display_calendar_view
     
