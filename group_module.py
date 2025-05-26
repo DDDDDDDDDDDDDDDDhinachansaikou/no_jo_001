@@ -44,22 +44,22 @@ def invite_friend_to_group(current_user, friend_id, group_name):
 
     # 檢查使用者是否存在
     friend_row = df[df["user_id"] == friend_id]
-    if friend_row.empty:
+    elif friend_row.empty:
         return False, "該使用者不存在"
 
     # 檢查是否為好友
     current_friends_raw = df[df["user_id"] == current_user]["friends"].values[0]
     current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
-    if friend_id not in current_friends:
+    elif friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
     # 檢查對方是否已在群組中
     group_members = df[df["user_id"] == friend_id]["group_members"].values[0]
-    if group_members and group_name in group_members.split(","):
+    elif group_members and group_name in group_members.split(","):
         return False, "對方已經在該群組中"
 
     # 邀請成功（這邊不做任何狀態紀錄，僅回傳成功）
-    return True, "邀請成功"
+    else : return True, "邀請成功"
 
 def list_groups_for_user(user_id):
     df = get_df()
