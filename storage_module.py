@@ -22,7 +22,7 @@ except Exception as e:
     st.stop()
 
 # 讀取資料表
-@st.cache_data(ttl=60)
+@st.cache_data(ttl=10)
 def get_df():
     try:
         records = sheet.get_all_records()
