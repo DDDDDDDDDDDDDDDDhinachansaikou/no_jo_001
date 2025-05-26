@@ -21,11 +21,16 @@ def render_ui():
         st.session_state.page = "登入"
     if "rerun_triggered" not in st.session_state:
         st.session_state.rerun_triggered = False
-
-    if st.session_state.page == "登入成功" and not st.session_state.rerun_triggered:
+    if (
+        st.session_state.get("authenticated", False)
+        and st.session_state.page == "登入成功"
+        and not st.session_state.rerun_triggered
+    ):
         st.session_state.page = "登記可用時間"
         st.session_state.rerun_triggered = True
         st.rerun()
+
+    
 
     if st.session_state.authenticated:
         if st.session_state.user_id == "GM":
