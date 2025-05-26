@@ -57,7 +57,7 @@ def invite_friend_to_group(current_user, friend_id, group_name):
     if friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
-    # 檢查對方是否已在群組中（解析 |group:member,member|group2:member2）
+    # 檢查對方是否已在群組中
     group_members = friend_row["group_members"].values[0]
     is_in_group = False
     if group_members:
@@ -73,7 +73,39 @@ def invite_friend_to_group(current_user, friend_id, group_name):
     if is_in_group:
         return False, "對方已經在該群組中"
 
-    return True, "邀請成功"
+    # ✅ 執行「實際加入」的動作
+    # 1. 更新 groups 欄
+    idx = friend_row.index[0]
+    groups = df.at[idx, "groups"]
+    group_set = set(groups.split(",")) if groups else set()
+    group_set.add(group_name)
+    df.at[idx, "groups"] = ",".join(sorted(group_set))
+
+    # 2. 更新 group_members 欄
+    members_str = df.at[idx, "group_members"]
+    # 解析 group_members 欄位
+    group_map = {}
+    if members_str:
+        for entry in members_str.split('|'):
+            if not entry or ':' not in entry:
+                continue
+            g, members = entry.split(':', 1)
+            member_list = [m.strip() for m in members.split(',') if m.strip()]
+            group_map[g] = set(member_list)
+    # 更新本群組成員
+    if group_name in group_map:
+        group_map[group_name].add(friend_id)
+    else:
+        group_map[group_name] = {friend_id}
+    # 重新組合 group_members 字串
+    group_members_new = ""
+    for g, mems in group_map.items():
+        group_members_new += f"|{g}:{','.join(sorted(mems))}"
+    df.at[idx, "group_members"] = group_members_new
+
+    # 3. 存回
+    save_df(df)
+    return True, "邀請成功，好友已加入群組"
 
 def list_groups_for_user(user_id):
     df = get_df()
