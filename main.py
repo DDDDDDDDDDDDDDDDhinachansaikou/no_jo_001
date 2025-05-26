@@ -98,10 +98,43 @@ elif selected_page == "送出好友申請":
 
 
 elif selected_page == "回應好友申請":
-    if not requests:
-    for requester in requests:
-        with col1:
-        with col2:
+    st.header("回應好友申請")
+
+    df = get_df()
+    user_id = st.session_state.get("user_id")
+    user_row = df[df["user_id"] == user_id]
+
+    if user_row.empty:
+        st.warning("找不到使用者資料")
+    else:
+        requests_str = user_row.iloc[0].get("friend_requests", "")
+        requests = [r for r in requests_str.split(",") if r.strip()]
+
+        if not requests:
+            st.info("你目前沒有任何好友申請")
+        else:
+            st.write("你收到的好友申請：")
+            for requester in requests:
+                col1, col2 = st.columns([3, 2])
+
+                with col1:
+                    st.write(f"使用者 `{requester}` 想加你好友")
+
+                with col2:
+                    accept = st.button("接受", key=f"accept_{requester}")
+                    reject = st.button("拒絕", key=f"reject_{requester}")
+
+                if accept:
+                    success, msg = respond_to_request(user_id, requester, accept=True)
+                    if success:
+                        st.success(f"已接受 {requester} 的好友申請")
+                        st.rerun()
+
+                if reject:
+                    success, msg = respond_to_request(user_id, requester, accept=False)
+                    if success:
+                        st.info(f"已拒絕 {requester} 的好友申請")
+                        st.rerun()
 
 elif selected_page == "查看好友清單":
     st.header("好友清單")
