@@ -37,31 +37,32 @@ def create_group(user_id, group_name):
 def invite_friend_to_group(current_user, friend_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
-    friend_row = df[df["user_id"] == friend_id]
-    current_friends_raw = df[df["user_id"] == current_user]["friends"].values[0]
-    current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
-    group_members = df[df["user_id"] == friend_id]["group_members"].values[0]
+
     # 不能邀請自己
     if current_user == friend_id:
         return False, "不能邀請自己加入群組"
 
     # 檢查使用者是否存在
-    
-    elif friend_row.empty:
+    friend_row = df[df["user_id"] == friend_id]
+    if friend_row.empty:
         return False, "該使用者不存在"
 
     # 檢查是否為好友
-    
-    elif friend_id not in current_friends:
+    current_row = df[df["user_id"] == current_user]
+    if current_row.empty:
+        return False, "當前使用者不存在"
+
+    current_friends_raw = current_row["friends"].values[0]
+    current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
+    if friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
     # 檢查對方是否已在群組中
-    
-    elif group_members and group_name in group_members.split(","):
+    group_members = friend_row["group_members"].values[0]
+    if group_members and group_name in group_members.split(","):
         return False, "對方已經在該群組中"
 
-    # 邀請成功（這邊不做任何狀態紀錄，僅回傳成功）
-    else : return True, "邀請成功"
+    return True, "邀請成功"
 
 def list_groups_for_user(user_id):
     df = get_df()
