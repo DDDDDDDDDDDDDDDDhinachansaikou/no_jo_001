@@ -146,9 +146,12 @@ def render_group_management_ui(user_id):
     st.subheader("建立新群組")
     new_group = st.text_input("群組名稱", key="new_group_input")
     if st.button("建立群組"):
-        success, msg = create_group(user_id, new_group)
-        st.success(msg) if success else st.error(msg)
-        st.rerun()
+    success, msg = create_group(user_id, new_group)
+    if success:
+        st.success(msg)
+    else:
+        st.error(msg)
+
 
     st.subheader("邀請好友加入群組")
     friend_to_invite = st.text_input("好友 ID", key="friend_invite_input")
