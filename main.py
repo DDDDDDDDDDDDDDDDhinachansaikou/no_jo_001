@@ -17,8 +17,8 @@ from calendar_tools import display_calendar_view
 # 自動跳轉處理
 
 # 功能選單
-    page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請", "查看好友清單", "群組管理", "登出"]
-        page_options.insert(-1, "管理介面")
+page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請", "查看好友清單", "群組管理", "登出"]
+page_options.insert(-1, "管理介面")
 else:
     page_options = ["登入", "註冊"]
 
