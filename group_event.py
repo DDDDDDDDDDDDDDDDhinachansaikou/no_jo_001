@@ -64,7 +64,6 @@ def render_group_events_ui(group_name, user_id):
                 if st.button("取消活動", key=f"cancel_{group_name}_{idx}"):
                     delete_event(idx)
                     st.success("活動已取消")
-                    st.rerun()
         # 兩個按鈕永遠可切換
         with col2:
             if st.button("參加", key=f"join_{group_name}_{idx}"):
