@@ -18,3 +18,4 @@ from storage_module import get_df, save_df
 
 import pandas as pd
 from datetime import date
+render_ui()
