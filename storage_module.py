@@ -47,24 +47,24 @@ def get_event_rows(group_name=None):
         events = events[events['group_name'] == group_name]
     return events
 
-def add_event_row(group_name, title, date, created_by):
+def add_event_row(group_name, event_title, event_date, created_by, event_summary):
     df = get_df()
+    # 建議補欄位兼容
+    for col in ["group_name", "event_title", "event_date", "created_by", "event_summary", "participants_yes", "participants_no"]:
+        if col not in df.columns:
+            df[col] = ""
     new_row = {
-        'row_type': 'event',
-        'group_name': group_name,
-        'event_title': title,
-        'event_date': str(date),
-        'created_by': created_by,
-        'participants_yes': "",
-        'participants_no': ""
+        "group_name": group_name,
+        "event_title": event_title,
+        "event_date": event_date,
+        "created_by": created_by,
+        "event_summary": event_summary,
+        "participants_yes": "",
+        "participants_no": ""
     }
-    # 其它欄設空字串
-    for col in df.columns:
-        if col not in new_row:
-            new_row[col] = ""
-    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    df = df.append(new_row, ignore_index=True)
     save_df(df)
-    return True
+
 
 def update_event_participation(event_idx, yes_list, no_list):
     df = get_df()
