@@ -37,24 +37,26 @@ def create_group(user_id, group_name):
 def invite_friend_to_group(current_user, friend_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
-
+    friend_row = df[df["user_id"] == friend_id]
+    current_friends_raw = df[df["user_id"] == current_user]["friends"].values[0]
+    current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
+    group_members = df[df["user_id"] == friend_id]["group_members"].values[0]
     # 不能邀請自己
     if current_user == friend_id:
         return False, "不能邀請自己加入群組"
 
     # 檢查使用者是否存在
-    friend_row = df[df["user_id"] == friend_id]
+    
     elif friend_row.empty:
         return False, "該使用者不存在"
 
     # 檢查是否為好友
-    current_friends_raw = df[df["user_id"] == current_user]["friends"].values[0]
-    current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
+    
     elif friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
     # 檢查對方是否已在群組中
-    group_members = df[df["user_id"] == friend_id]["group_members"].values[0]
+    
     elif group_members and group_name in group_members.split(","):
         return False, "對方已經在該群組中"
 
