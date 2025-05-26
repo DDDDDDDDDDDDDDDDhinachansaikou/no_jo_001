@@ -22,7 +22,7 @@ def render_group_events_ui(group_name, user_id):
             if event_title:
                 add_event_row(group_name, event_title, event_date, user_id, event_summary)
                 st.success("活動建立成功")
-                st.rerun()
+                
             else:
                 st.warning("請輸入活動標題")
 
@@ -73,7 +73,7 @@ def render_group_events_ui(group_name, user_id):
                     no_list.remove(user_id)
                 update_event_participation(idx, yes_list, no_list)
                 st.success("已標記參加")
-                st.rerun()
+                
         with col3:
             if st.button("不參加", key=f"notjoin_{group_name}_{idx}"):
                 if not user_is_no:
@@ -82,7 +82,7 @@ def render_group_events_ui(group_name, user_id):
                     yes_list.remove(user_id)
                 update_event_participation(idx, yes_list, no_list)
                 st.success("已標記不參加")
-                st.rerun()
+                
         with col4:
             st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
             st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
