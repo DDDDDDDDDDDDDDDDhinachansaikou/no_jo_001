@@ -74,23 +74,25 @@ def delete_event_by_id(activity_id):
 def render_group_events_ui(group_name, user_id):
     st.subheader(f"{group_name} 群組活動")
     # 活動建立 UI
-    with st.expander("建立新活動"):
-        event_title = st.text_input("活動名稱", key=f"title_{group_name}")
-        event_date = st.date_input("活動日期", key=f"date_{group_name}")
-        event_summary = st.text_area("活動概述", key=f"summary_{group_name}")
-        if st.button("建立活動", key=f"add_{group_name}"):
-            if event_title and event_date:
-                add_event_row(
-                    group_name,
-                    event_title,
-                    event_date.strftime("%Y-%m-%d"),
-                    user_id,
-                    event_summary
-                )
-                st.success("活動已建立")
-                st.rerun()
-            else:
-                st.error("活動名稱與日期必填")
+    st.markdown("### 建立新活動")
+    event_title = st.text_input("活動名稱", key=f"title_{group_name}")
+    event_date = st.date_input("活動日期", key=f"date_{group_name}")
+    event_summary = st.text_area("活動概述", key=f"summary_{group_name}")
+    if st.button("建立活動", key=f"add_{group_name}"):
+        # ...後略...
+
+        if event_title and event_date:
+            add_event_row(
+                group_name,
+                event_title,
+                event_date.strftime("%Y-%m-%d"),
+                user_id,
+                event_summary
+            )
+            st.success("活動已建立")
+            st.rerun()
+        else:
+            st.error("活動名稱與日期必填")
 
     # 活動清單（自動略過過期活動）
     events_to_show = get_event_rows(group_name)
