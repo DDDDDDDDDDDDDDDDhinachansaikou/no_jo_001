@@ -235,8 +235,8 @@ def render_group_management_ui(user_id):
 
     else:
         st.info("您尚未加入任何群組")
-for gname, members in groups.items():
-    st.markdown(f"#### {gname}")
-    st.markdown(f"成員：{', '.join(members)}")
-    with st.expander(f"【{gname}】活動／日程表"):
-        render_group_events_ui(gname, user_id)
+    for gname, members in groups.items():
+        st.markdown(f"#### {gname}")
+        st.markdown(f"成員：{', '.join(members)}")
+        with st.expander(f"【{gname}】活動／日程表"):
+            render_group_events_ui(gname, user_id)
