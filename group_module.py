@@ -57,12 +57,21 @@ def invite_friend_to_group(current_user, friend_id, group_name):
     if friend_id not in current_friends:
         return False, "只能邀請好友加入群組"
 
-    # 檢查對方是否已在群組中
+    # 檢查對方是否已在群組中（解析 |group:member,member|group2:member2）
     group_members = friend_row["group_members"].values[0]
-    group_set = set(group_members.split(",")) if group_members else set()
-    if group_name in group_set:
+    is_in_group = False
+    if group_members:
+        entries = [s for s in group_members.split('|') if s]
+        for entry in entries:
+            if ':' not in entry:
+                continue
+            gname, members = entry.split(':', 1)
+            member_list = [m.strip() for m in members.split(',') if m.strip()]
+            if gname == group_name and friend_id in member_list:
+                is_in_group = True
+                break
+    if is_in_group:
         return False, "對方已經在該群組中"
-
 
     return True, "邀請成功"
 
