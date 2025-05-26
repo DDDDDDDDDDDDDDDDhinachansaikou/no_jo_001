@@ -1,3 +1,4 @@
+import pandas as pd
 import streamlit as st
 from storage_module import get_event_rows, add_event_row, update_event_participation, get_df, save_df
 from datetime import date, datetime
@@ -85,7 +86,32 @@ def render_group_events_ui(group_name, user_id):
             st.warning("你已選擇不參加此活動")
         else:
             st.markdown("尚未表態參加與否")
-
+        if row["created_by"] == user_id:
+            st.markdown("---")
+            st.markdown("#### 參加名單下載/檢視")
+    
+            yes_df = pd.DataFrame({"user_id": yes_list}) if yes_list else pd.DataFrame({"user_id": ["無"]})
+            no_df = pd.DataFrame({"user_id": no_list}) if no_list else pd.DataFrame({"user_id": ["無"]})
+    
+            st.markdown("##### 參加者")
+            st.dataframe(yes_df, use_container_width=True)
+            st.download_button(
+                label="下載參加者名單 (csv)",
+                data=yes_df.to_csv(index=False).encode("utf-8"),
+                file_name=f"{row['event_title']}_participants_yes.csv",
+                mime="text/csv",
+                key=f"dl_yes_{group_name}_{idx}"
+            )
+    
+            st.markdown("##### 不參加者")
+            st.dataframe(no_df, use_container_width=True)
+            st.download_button(
+                label="下載不參加者名單 (csv)",
+                data=no_df.to_csv(index=False).encode("utf-8"),
+                file_name=f"{row['event_title']}_participants_no.csv",
+                mime="text/csv",
+                key=f"dl_no_{group_name}_{idx}"
+            )
     # 自動刪除過期活動（整個 group_events）
     expired_idx = group_events[~group_events.apply(not_expired, axis=1)].index
     if not expired_idx.empty:
