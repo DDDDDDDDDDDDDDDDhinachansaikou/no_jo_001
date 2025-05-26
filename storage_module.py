@@ -1,60 +1,73 @@
-import streamlit as st
 import pandas as pd
+import time
+import streamlit as st
 import gspread
 from google.oauth2 import service_account
-import time
 
 SHEET_NAME = "meeting_records"
+secrets = st.secrets["gspread"]
+credentials = service_account.Credentials.from_service_account_info(secrets)
+scoped_credentials = credentials.with_scopes([
+    "https://www.googleapis.com/auth/spreadsheets",
+    "https://www.googleapis.com/auth/drive"
+])
+client = gspread.authorize(scoped_credentials)
+sheet = client.open(SHEET_NAME).sheet1
 
-# 安全初始化 Google Sheets 連線
-try:
-    secrets = st.secrets["gspread"]
-    credentials = service_account.Credentials.from_service_account_info(secrets)
-    scoped_credentials = credentials.with_scopes([
-        "https://www.googleapis.com/auth/spreadsheets",
-        "https://www.googleapis.com/auth/drive"
-    ])
-    client = gspread.authorize(scoped_credentials)
-    sheet = client.open(SHEET_NAME).sheet1
-except Exception as e:
-    st.error("無法連線到 Google Sheets 請確認 secrets 設定與 SHEET_NAME 是否正確")
-    st.code(f"{e}")
-    st.stop()
-
-# 讀取資料表
-@st.cache_data(ttl=10)
+@st.cache_data(ttl=60)
 def get_df():
-    try:
-        records = sheet.get_all_records()
-        df = pd.DataFrame(records)
-        if df.empty:
-            df = pd.DataFrame(columns=['user_id', 'password', 'available_dates', 'friends', 'friend_requests'])
-        else:
-            for col in ['user_id', 'password', 'available_dates', 'friends', 'friend_requests']:
-                if col not in df.columns:
-                    df[col] = ''
-            df['user_id'] = df['user_id'].astype(str)
-            df['password'] = df['password'].astype(str)
-            df = df.fillna("")
-        return df
-    except Exception as e:
-        st.error("無法取得資料")
-        st.code(f"{e}")
-        return pd.DataFrame()
+    records = sheet.get_all_records()
+    df = pd.DataFrame(records)
+    if df.empty:
+        df = pd.DataFrame(columns=['row_type', 'user_id', 'password', 'available_dates', 'friends', 'friend_requests', 'groups', 'group_members', 'group_name', 'event_title', 'event_date', 'created_by', 'participants_yes', 'participants_no'])
+    else:
+        # 確保所有欄位齊全
+        for col in ['row_type', 'user_id', 'password', 'available_dates', 'friends', 'friend_requests', 'groups', 'group_members', 'group_name', 'event_title', 'event_date', 'created_by', 'participants_yes', 'participants_no']:
+            if col not in df.columns:
+                df[col] = ''
+        df = df.fillna("")
+    return df
 
-# 儲存資料表
 def save_df(df, cooldown=2.0):
     now = time.time()
     if now - st.session_state.get("last_save_timestamp", 0) < cooldown:
-        st.warning("操作太頻繁 請稍候再試")
+        st.warning("操作太頻繁，請稍候再試")
         return False
-    try:
-        df = df.fillna("")
-        sheet.clear()
-        sheet.update([df.columns.values.tolist()] + df.values.tolist())
-        st.session_state.last_save_timestamp = now
-        return True
-    except Exception as e:
-        st.error("儲存失敗")
-        st.code(f"{e}")
-        return False
+    df = df.fillna("")
+    sheet.clear()
+    sheet.update([df.columns.values.tolist()] + df.values.tolist())
+    st.session_state.last_save_timestamp = now
+    return True
+
+# 活動資料操作輔助
+def get_event_rows(group_name=None):
+    df = get_df()
+    events = df[df['row_type'] == 'event']
+    if group_name is not None:
+        events = events[events['group_name'] == group_name]
+    return events
+
+def add_event_row(group_name, title, date, created_by):
+    df = get_df()
+    new_row = {
+        'row_type': 'event',
+        'group_name': group_name,
+        'event_title': title,
+        'event_date': str(date),
+        'created_by': created_by,
+        'participants_yes': "",
+        'participants_no': ""
+    }
+    # 其它欄設空字串
+    for col in df.columns:
+        if col not in new_row:
+            new_row[col] = ""
+    df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
+    save_df(df)
+    return True
+
+def update_event_participation(event_idx, yes_list, no_list):
+    df = get_df()
+    df.at[event_idx, "participants_yes"] = ",".join(yes_list)
+    df.at[event_idx, "participants_no"] = ",".join(no_list)
+    save_df(df)
