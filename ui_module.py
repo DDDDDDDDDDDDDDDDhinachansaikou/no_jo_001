@@ -1,13 +1,12 @@
+import streamlit as st
+from datetime import date
+import pandas as pd
+from availability import update_availability, find_users_by_date
+from storage_module import get_df
+from friend_module import send_friend_request, accept_friend_request, reject_friend_request, list_friend_requests, list_friends, show_friends_availability, show_friend_list_with_availability
+from group_module import render_group_management_ui
+from calendar_module import display_calendar_view
 def render_ui():
-    import streamlit as st
-    from datetime import date
-    import pandas as pd
-    from availability import update_availability, find_users_by_date
-    from storage_module import get_df
-    from friend_module import send_friend_request, accept_friend_request, reject_friend_request, list_friend_requests, list_friends, show_friends_availability, show_friend_list_with_availability
-    from group_module import render_group_management_ui
-    from calendar_module import display_calendar_view
-    
     st.title("NO_JO")
     
     # 初始化 session 狀態
