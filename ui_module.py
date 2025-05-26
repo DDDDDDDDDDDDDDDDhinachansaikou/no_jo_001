@@ -52,7 +52,6 @@ def render_ui():
             if success:
                 st.success(msg)
                 st.session_state.page = "登入"
-                st.rerun()
             else:
                 st.error(msg)
 
