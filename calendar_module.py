@@ -60,7 +60,7 @@ def display_calendar_view(user_id):
     available_raw = user_data.iloc[0].get("available_dates", "")
     if not isinstance(available_raw, str):
         available_raw = ""
-    available = set(d.strip() for d in available_raw.split(',') if d.strip())
+    available = set(d.strip() for d in user_data.iloc[0]['available_dates'].split(',') if d.strip())
     
     cal = calendar.Calendar(firstweekday=0)
     month_days = list(cal.itermonthdays(year, month))
