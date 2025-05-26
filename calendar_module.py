@@ -53,10 +53,15 @@ def display_calendar_view(user_id):
     df = get_df()
     user_data = df[df["user_id"] == user_id]
     if user_data.empty:
-        st.warning(f"{user_id} 無資料")
+        st.info(f"{user_id} 無資料")
         return
-
-    available = set(d.strip() for d in user_data.iloc[0]['available_dates'].split(',') if d.strip())
+    
+    # 加入防呆處理
+    available_raw = user_data.iloc[0].get("available_dates", "")
+    if not isinstance(available_raw, str):
+        available_raw = ""
+    available = set(d.strip() for d in available_raw.split(',') if d.strip())
+    
     cal = calendar.Calendar(firstweekday=0)
     month_days = list(cal.itermonthdays(year, month))
 
