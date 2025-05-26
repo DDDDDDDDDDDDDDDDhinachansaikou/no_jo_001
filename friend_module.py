@@ -61,9 +61,13 @@ def reject_friend_request(user_id, requester):
 
 def list_friend_requests(user_id):
     df = get_df()
-    idx = df[df['user_id'] == user_id].index[0]
-    requests = df.at[idx, 'friend_requests']
-    return sorted(list(filter(None, requests.split(','))))
+    user_row = df[df['user_id'] == user_id]
+    if user_row.empty:
+        return []   # 或直接 return None，看你前面怎麼判斷
+    idx = user_row.index[0]
+    requests_raw = df.at[idx, 'friend_requests']
+    return [r.strip() for r in requests_raw.split(',') if r.strip()] if requests_raw else []
+
 
 def list_friends(user_id):
     df = get_df()
