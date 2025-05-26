@@ -2,7 +2,7 @@ import streamlit as st
 from storage_module import get_df, save_df
 from calendar_module import display_calendar_view
 from confirm_dialog_module import confirm_action
-from group_event import add_event_row,get_event_rows,delete_event_by_id,update_event_participation_by_id,get_event_by_id
+from group_event import render_group_events_ui,add_event_row,get_event_rows,delete_event_by_id,update_event_participation_by_id,get_event_by_id
 
 def ensure_group_columns(df):
     if 'groups' not in df.columns:
