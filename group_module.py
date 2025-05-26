@@ -59,8 +59,10 @@ def invite_friend_to_group(current_user, friend_id, group_name):
 
     # 檢查對方是否已在群組中
     group_members = friend_row["group_members"].values[0]
-    if group_members and group_name in group_members.split(","):
+    group_set = set(group_members.split(",")) if group_members else set()
+    if group_name in group_set:
         return False, "對方已經在該群組中"
+
 
     return True, "邀請成功"
 
