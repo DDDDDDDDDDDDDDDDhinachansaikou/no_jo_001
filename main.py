@@ -2,7 +2,7 @@
 import streamlit as st
 
 # UI 控制與頁面邏輯（主選單與所有互動都在此模組）
-import ui_module
+from ui_module import render_ui
 
 # 資料與功能模組（行為邏輯）
 from auth import authenticate_user, register_user
