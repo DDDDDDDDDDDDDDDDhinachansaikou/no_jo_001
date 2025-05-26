@@ -1,6 +1,7 @@
 import streamlit as st
 from storage_module import get_df, save_df
 from calendar_module import display_calendar_view
+from confirm_dialog_module import confirm_action
 
 def ensure_group_columns(df):
     if 'groups' not in df.columns:
@@ -204,23 +205,28 @@ def render_group_management_ui(user_id):
         kickable_members = [m for m in groups[selected_group_for_kick] if m != user_id]
         if kickable_members:
             selected_member_to_kick = st.selectbox("選擇要移除的成員", kickable_members, key="kick_member_select")
-            if st.button("移除該成員"):
+            if confirm_action("真的要移除這位成員嗎？", key="remove_member"):
                 success, msg = remove_member_from_group(user_id, selected_group_for_kick, selected_member_to_kick)
                 if success:
-                    st.success(msg)
+                    st.success("移除完成")
+                    st.info(msg)
                     st.rerun()
                 else:
                     st.error(msg)
         else:
             st.info("該群組沒有其他成員可移除")
-
+            
     st.markdown("---")
     st.subheader("刪除群組")
     if groups:
         selected_group_for_delete = st.selectbox("選擇要刪除的群組", list(groups.keys()), key="delete_group_selector")
-        if st.button("刪除選定群組"):
+        if confirm_action("真的要刪除這個群組嗎？（不可復原）", key="delete_group"):
             success, msg = delete_group(selected_group_for_delete)
-            st.success(msg) if success else st.error(msg)
-            st.rerun()
+            if success:
+                st.success("刪除完成")
+                st.info(msg)
+                st.rerun()
+            else:
+                st.error(msg)
     else:
         st.info("您尚未加入任何群組")
