@@ -1,14 +1,21 @@
 import streamlit as st
-from storage_module import get_event_rows, add_event_row, update_event_participation
+from storage_module import get_event_rows, add_event_row, update_event_participation, get_df, save_df
+from datetime import date, datetime
+
+def delete_event(event_idx):
+    df = get_df()
+    df = df.drop(index=event_idx).reset_index(drop=True)
+    save_df(df)
+    return True
 
 def render_group_events_ui(group_name, user_id):
     st.markdown("### 群組活動／日程表")
 
-    # 改用表單或直接顯示，避免 expander 裡包 expander
+    # 新增活動
     with st.form(key=f"event_form_{group_name}"):
         event_title = st.text_input("活動標題", key=f"event_title_{group_name}")
         event_date = st.date_input("活動日期", key=f"event_date_{group_name}")
-        submit_btn = st.form_submit_button("建立活動", use_container_width=True)
+        submit_btn = st.form_submit_button("建立活動")
         if submit_btn:
             if event_title:
                 add_event_row(group_name, event_title, event_date, user_id)
@@ -17,36 +24,89 @@ def render_group_events_ui(group_name, user_id):
             else:
                 st.warning("請輸入活動標題")
 
-    # 列出活動
+    # 列出活動，並自動過濾掉過期活動
     group_events = get_event_rows(group_name)
     if group_events.empty:
         st.info("本群組目前沒有活動")
         return
 
-    for idx, row in group_events.iterrows():
-        st.markdown(f"**{row['event_title']}**（{row['event_date']}）")
-        yes_list = [x for x in row['participants_yes'].split(",") if x]
-        no_list = [x for x in row['participants_no'].split(",") if x]
+    today_str = date.today().strftime("%Y-%m-%d")
+    # 篩選未過期活動
+    def not_expired(event_row):
+        # 支援 event_date 為 datetime 或字串
+        if isinstance(event_row['event_date'], datetime):
+            event_date_str = event_row['event_date'].strftime("%Y-%m-%d")
+        else:
+            event_date_str = str(event_row['event_date'])
+        return event_date_str >= today_str
 
-        col1, col2, col3 = st.columns([1, 1, 4])
+    events_to_show = group_events[group_events.apply(not_expired, axis=1)]
+    if events_to_show.empty:
+        st.info("本群組目前沒有活動")
+        return
+
+    for idx, row in events_to_show.iterrows():
+        st.markdown(f"**{row['event_title']}**（{row['event_date']}）")
+        yes_list = [x for x in str(row['participants_yes']).split(",") if x]
+        no_list = [x for x in str(row['participants_no']).split(",") if x]
+
+        # 狀態切換（同時保證參加和不參加互斥）
+        user_is_yes = user_id in yes_list
+        user_is_no = user_id in no_list
+
+        col1, col2, col3, col4 = st.columns([1, 1, 2, 2])
+        # 主辦人可取消活動
         with col1:
-            if st.button("參加", key=f"join_{group_name}_{idx}"):
-                if user_id not in yes_list:
-                    yes_list.append(user_id)
-                if user_id in no_list:
-                    no_list.remove(user_id)
-                update_event_participation(idx, yes_list, no_list)
-                st.success("已標記參加")
-                st.rerun()
+            if row["created_by"] == user_id:
+                if st.button("取消活動", key=f"cancel_{group_name}_{idx}"):
+                    delete_event(idx)
+                    st.success("活動已取消")
+                    st.rerun()
+        # 狀態切換按鈕
         with col2:
-            if st.button("不參加", key=f"notjoin_{group_name}_{idx}"):
-                if user_id not in no_list:
-                    no_list.append(user_id)
-                if user_id in yes_list:
+            if user_is_yes:
+                if st.button("退出", key=f"leave_{group_name}_{idx}"):
                     yes_list.remove(user_id)
-                update_event_participation(idx, yes_list, no_list)
-                st.success("已標記不參加")
-                st.rerun()
+                    if user_id not in no_list:
+                        no_list.append(user_id)
+                    update_event_participation(idx, yes_list, no_list)
+                    st.success("已退出活動")
+                    st.rerun()
+            else:
+                if st.button("參加", key=f"join_{group_name}_{idx}"):
+                    if user_id not in yes_list:
+                        yes_list.append(user_id)
+                    if user_id in no_list:
+                        no_list.remove(user_id)
+                    update_event_participation(idx, yes_list, no_list)
+                    st.success("已標記參加")
+                    st.rerun()
         with col3:
+            if user_is_no:
+                if st.button("重新參加", key=f"rejoin_{group_name}_{idx}"):
+                    if user_id not in yes_list:
+                        yes_list.append(user_id)
+                    if user_id in no_list:
+                        no_list.remove(user_id)
+                    update_event_participation(idx, yes_list, no_list)
+                    st.success("已標記參加")
+                    st.rerun()
+            else:
+                if st.button("不參加", key=f"notjoin_{group_name}_{idx}"):
+                    if user_id not in no_list:
+                        no_list.append(user_id)
+                    if user_id in yes_list:
+                        yes_list.remove(user_id)
+                    update_event_participation(idx, yes_list, no_list)
+                    st.success("已標記不參加")
+                    st.rerun()
+        with col4:
             st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
             st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
+
+    # 自動刪除過期活動（整個 group_events）
+    expired_idx = group_events[~group_events.apply(not_expired, axis=1)].index
+    if not expired_idx.empty:
+        df = get_df()
+        df = df.drop(index=expired_idx).reset_index(drop=True)
+        save_df(df)
