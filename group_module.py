@@ -205,7 +205,7 @@ def render_group_management_ui(user_id):
         kickable_members = [m for m in groups[selected_group_for_kick] if m != user_id]
         if kickable_members:
             selected_member_to_kick = st.selectbox("選擇要移除的成員", kickable_members, key="kick_member_select")
-            if confirm_action("真的要移除這位成員嗎？", key="remove_member"):
+            if confirm_action("確定移除這位成員", key="remove_member", warn_text="移除後該成員將無法再存取本群組資料，且無法復原。"):
                 success, msg = remove_member_from_group(user_id, selected_group_for_kick, selected_member_to_kick)
                 if success:
                     st.success("移除完成")
@@ -220,7 +220,7 @@ def render_group_management_ui(user_id):
     st.subheader("刪除群組")
     if groups:
         selected_group_for_delete = st.selectbox("選擇要刪除的群組", list(groups.keys()), key="delete_group_selector")
-        if confirm_action("真的要刪除這個群組嗎？（不可復原）", key="delete_group"):
+        if confirm_action("確定刪除這個群組", key="delete_group", warn_text="本群組及所有資料將永久刪除，無法復原！"):
             success, msg = delete_group(selected_group_for_delete)
             if success:
                 st.success("刪除完成")
@@ -228,5 +228,6 @@ def render_group_management_ui(user_id):
                 st.rerun()
             else:
                 st.error(msg)
+
     else:
         st.info("您尚未加入任何群組")
