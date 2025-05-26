@@ -34,26 +34,32 @@ def create_group(user_id, group_name):
     save_df(df)
     return True, "建立群組成功"
 
-def invite_friend_to_group(user_id, friend_id, group_name):
+def invite_to_group(current_user, friend_id, group_name):
     df = get_df()
     df = ensure_group_columns(df)
 
-    if friend_id not in df['user_id'].values:
-        return False, "好友不存在"
+    # 不能邀請自己
+    if current_user == friend_id:
+        return False, "不能邀請自己加入群組"
 
-    friend_idx = df[df['user_id'] == friend_id].index[0]
-    groups = set(df.at[friend_idx, 'groups'].split(',')) if df.at[friend_idx, 'groups'] else set()
-    if group_name in groups:
-        return False, f"{friend_id} 已在群組中"
+    # 檢查使用者是否存在
+    friend_row = df[df["user_id"] == friend_id]
+    if friend_row.empty:
+        return False, "該使用者不存在"
 
-    groups.add(group_name)
-    df.at[friend_idx, 'groups'] = ','.join(sorted(groups))
-    new_entry = f"|{group_name}:{friend_id}"
-    if new_entry not in df.at[friend_idx, 'group_members']:
-        df.at[friend_idx, 'group_members'] += new_entry
+    # 檢查是否為好友
+    current_friends_raw = df[df["user_id"] == current_user]["friends"].values[0]
+    current_friends = set(current_friends_raw.split(",")) if current_friends_raw else set()
+    if friend_id not in current_friends:
+        return False, "只能邀請好友加入群組"
 
-    save_df(df)
-    return True, f"已邀請 {friend_id} 加入群組 {group_name}"
+    # 檢查對方是否已在群組中
+    group_members = df[df["user_id"] == friend_id]["group_members"].values[0]
+    if group_members and group_name in group_members.split(","):
+        return False, "對方已經在該群組中"
+
+    # 邀請成功（這邊不做任何狀態紀錄，僅回傳成功）
+    return True, "邀請成功"
 
 def list_groups_for_user(user_id):
     df = get_df()
