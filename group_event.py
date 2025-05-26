@@ -79,8 +79,6 @@ def render_group_events_ui(group_name, user_id):
     event_date = st.date_input("活動日期", key=f"date_{group_name}")
     event_summary = st.text_area("活動概述", key=f"summary_{group_name}")
     if st.button("建立活動", key=f"add_{group_name}"):
-        # ...後略...
-
         if event_title and event_date:
             add_event_row(
                 group_name,
@@ -90,7 +88,6 @@ def render_group_events_ui(group_name, user_id):
                 event_summary
             )
             st.success("活動已建立")
-            st.rerun()
         else:
             st.error("活動名稱與日期必填")
 
@@ -113,7 +110,7 @@ def render_group_events_ui(group_name, user_id):
                 if st.button("取消活動", key=f"cancel_{activity_id}"):
                     delete_event_by_id(activity_id)
                     st.success("活動已取消")
-                    st.rerun()
+                    
             with c2:
                 df_download = pd.DataFrame({
                     "參加者": yes_list,
@@ -129,27 +126,27 @@ def render_group_events_ui(group_name, user_id):
                     yes_list.append(user_id)
                     update_event_participation_by_id(activity_id, yes_list, no_list)
                     st.success("已標記參加")
-                    st.rerun()
+                    
             with c2:
                 if st.button("不參加", key=f"notjoin_{activity_id}"):
                     no_list.append(user_id)
                     update_event_participation_by_id(activity_id, yes_list, no_list)
                     st.success("已標記不參加")
-                    st.rerun()
+                    
         elif user_id in yes_list:
             st.info("你已選擇參加")
             if st.button("取消參加", key=f"leave_yes_{activity_id}"):
                 yes_list.remove(user_id)
                 update_event_participation_by_id(activity_id, yes_list, no_list)
                 st.success("已取消參加")
-                st.rerun()
+                
         elif user_id in no_list:
             st.info("你已選擇不參加")
             if st.button("重新選擇", key=f"leave_no_{activity_id}"):
                 no_list.remove(user_id)
                 update_event_participation_by_id(activity_id, yes_list, no_list)
                 st.success("已取消不參加")
-                st.rerun()
+                
 
         # 展示名單
         st.write("目前參加名單")
