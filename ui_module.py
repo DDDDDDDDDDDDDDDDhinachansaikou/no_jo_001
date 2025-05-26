@@ -48,12 +48,12 @@ def render_ui():
         if st.button("註冊"):
             from auth import register_user
                 success, msg = register_user(uid, pw)
-            if success:
-                st.success(msg)
-                st.session_state.page = "登入"
-                st.rerun()
-            else:
-                st.error(msg)
+                if success:
+                    st.success(msg)
+                    st.session_state.page = "登入"
+                    st.rerun()
+                else:
+                    st.error(msg)
 
     elif selected_page == "登入":
         uid = st.text_input("帳號")
