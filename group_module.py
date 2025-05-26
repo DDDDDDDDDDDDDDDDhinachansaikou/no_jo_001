@@ -166,8 +166,7 @@ def render_group_management_ui(user_id):
     if st.button("邀請好友"):
         success, msg = invite_friend_to_group(user_id, friend_to_invite, group_target)
         st.success(msg) if success else st.error(msg)
-        time.sleep(1)
-        st.rerun()
+        
 
     st.markdown("---")
     st.subheader("移除群組成員")
