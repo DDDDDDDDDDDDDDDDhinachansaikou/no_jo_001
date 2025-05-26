@@ -24,15 +24,26 @@ def add_event_row(group_name, event_title, event_date, created_by, event_summary
     df = pd.concat([df, pd.DataFrame([new_row])], ignore_index=True)
     save_df(df)
 
-# 查詢活動
-def get_event_rows(group_name=None):
+# 查詢活動（自動排除過期活動，並清理資料庫）
+def get_event_rows(group_name=None, auto_clean=True):
     df = get_df()
     if 'row_type' not in df.columns:
         return pd.DataFrame()
     events = df[df['row_type'] == 'event']
+    today_str = date.today().strftime("%Y-%m-%d")
+    # 篩選群組
     if group_name is not None:
         events = events[events['group_name'] == group_name]
-    return events
+    # 自動移除過期活動
+    if auto_clean:
+        valid_idx = events[events["event_date"] >= today_str].index
+        expired_idx = events[events["event_date"] < today_str].index
+        if len(expired_idx) > 0:
+            df = df.drop(expired_idx)
+            save_df(df)
+        return events.loc[valid_idx]
+    else:
+        return events
 
 # 取得單一活動資料
 def get_event_by_id(activity_id):
@@ -62,7 +73,6 @@ def delete_event_by_id(activity_id):
 # UI: 活動清單渲染（for群組活動頁）
 def render_group_events_ui(group_name, user_id):
     st.subheader(f"{group_name} 群組活動")
-
     # 活動建立 UI
     with st.expander("建立新活動"):
         event_title = st.text_input("活動名稱", key=f"title_{group_name}")
@@ -82,37 +92,34 @@ def render_group_events_ui(group_name, user_id):
             else:
                 st.error("活動名稱與日期必填")
 
-    # 活動清單（for loop）
+    # 活動清單（自動略過過期活動）
     events_to_show = get_event_rows(group_name)
-    # ...for idx, row in events_to_show.iterrows()...
-
     for idx, row in events_to_show.iterrows():
         activity_id = row['activity_id']
         st.markdown(f"**活動名稱：{row['event_title']}**")
         st.markdown(f"活動日期：{row['event_date']}")
         st.markdown(f"主辦人：{row['created_by']}")
         st.markdown(f"活動說明：{row['event_summary']}")
-        
-        # 目前參加名單
         yes_list = [x for x in str(row['participants_yes']).split(",") if x]
         no_list = [x for x in str(row['participants_no']).split(",") if x]
         is_owner = (row['created_by'] == user_id)
 
-        # 顯示主辦人管理按鈕
+        # 主辦人可取消活動與下載名單
         if is_owner:
-            if st.button("取消活動", key=f"cancel_{activity_id}"):
-                delete_event_by_id(activity_id)
-                st.success("活動已取消")
-                
-            # 可下載參加者名單
-            if st.button("下載參加者名單", key=f"dl_{activity_id}"):
+            c1, c2 = st.columns(2)
+            with c1:
+                if st.button("取消活動", key=f"cancel_{activity_id}"):
+                    delete_event_by_id(activity_id)
+                    st.success("活動已取消")
+                    st.rerun()
+            with c2:
                 df_download = pd.DataFrame({
                     "參加者": yes_list,
                     "不參加者": no_list
                 })
-                st.dataframe(df_download)
                 st.download_button("下載CSV", df_download.to_csv(index=False).encode("utf-8"), file_name=f"{group_name}_{row['event_title']}_名單.csv")
-        # 參加/不參加按鈕（只給非主辦人或主辦人自己也可參加）
+
+        # 只有沒選過的人才能選
         if user_id not in yes_list and user_id not in no_list:
             c1, c2 = st.columns(2)
             with c1:
@@ -120,29 +127,28 @@ def render_group_events_ui(group_name, user_id):
                     yes_list.append(user_id)
                     update_event_participation_by_id(activity_id, yes_list, no_list)
                     st.success("已標記參加")
-                    
+                    st.rerun()
             with c2:
                 if st.button("不參加", key=f"notjoin_{activity_id}"):
                     no_list.append(user_id)
                     update_event_participation_by_id(activity_id, yes_list, no_list)
                     st.success("已標記不參加")
-                    
+                    st.rerun()
         elif user_id in yes_list:
             st.info("你已選擇參加")
-            # 可以退出參加
             if st.button("取消參加", key=f"leave_yes_{activity_id}"):
                 yes_list.remove(user_id)
                 update_event_participation_by_id(activity_id, yes_list, no_list)
                 st.success("已取消參加")
-                
+                st.rerun()
         elif user_id in no_list:
             st.info("你已選擇不參加")
-            # 可以退出不參加
             if st.button("重新選擇", key=f"leave_no_{activity_id}"):
                 no_list.remove(user_id)
                 update_event_participation_by_id(activity_id, yes_list, no_list)
                 st.success("已取消不參加")
-                
+                st.rerun()
+
         # 展示名單
         with st.expander("目前參加名單"):
             st.write("參加：", yes_list if yes_list else "尚無人參加")
