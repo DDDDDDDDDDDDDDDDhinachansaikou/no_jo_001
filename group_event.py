@@ -112,10 +112,11 @@ def render_group_events_ui(group_name, user_id):
                     st.success("活動已取消")
                     
             with c2:
-                df_download = pd.DataFrame({
-                    "參加者": yes_list,
-                    "不參加者": no_list
-                })
+                df_yes = pd.DataFrame({"user": yes_list, "status": "參加"})
+                df_no = pd.DataFrame({"user": no_list, "status": "不參加"})
+                df_download = pd.concat([df_yes, df_no], ignore_index=True)
+                df_download.columns = ["名單", "狀態"]
+
                 st.download_button("下載CSV", df_download.to_csv(index=False).encode("utf-8"), file_name=f"{group_name}_{row['event_title']}_名單.csv")
 
         # 只有沒選過的人才能選
