@@ -52,8 +52,6 @@ def render_ui():
             if success:
                 st.success(msg)
                 st.session_state.page = "登入"
-                st.session_state.rerun_triggered = False
-                st.rerun()
             else:
                 st.error(msg)
 
