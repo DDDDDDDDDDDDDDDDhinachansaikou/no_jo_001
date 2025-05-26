@@ -85,8 +85,8 @@ def render_group_events_ui(group_name, user_id):
                 st.success("已標記不參加")
                 st.rerun()
         with col4:
-            st.markdown(f"✅ 參加：{', '.join(yes_list) if yes_list else '無'}")
-            st.markdown(f"❌ 不參加：{', '.join(no_list) if no_list else '無'}")
+            st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
+            st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
 
         # 顯示自己目前狀態
         if user_is_yes:
