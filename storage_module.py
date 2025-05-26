@@ -29,6 +29,13 @@ def get_df():
     return df
 
 def save_df(df, cooldown=2.0):
+    # 強制所有日期欄位為字串
+    for col in df.columns:
+        if df[col].dtype == 'datetime64[ns]' or df[col].dtype == 'datetime64[ns, UTC]':
+            df[col] = df[col].dt.strftime('%Y-%m-%d')
+        elif df[col].apply(lambda x: isinstance(x, (pd.Timestamp, datetime, date))).any():
+            df[col] = df[col].apply(lambda x: x.strftime('%Y-%m-%d') if isinstance(x, (pd.Timestamp, datetime, date)) else x)
+
     now = time.time()
     if now - st.session_state.get("last_save_timestamp", 0) < cooldown:
         st.warning("操作太頻繁，請稍候再試")
@@ -38,6 +45,7 @@ def save_df(df, cooldown=2.0):
     sheet.update([df.columns.values.tolist()] + df.values.tolist())
     st.session_state.last_save_timestamp = now
     return True
+
 
 # 活動資料操作輔助
 def get_event_rows(group_name=None):
