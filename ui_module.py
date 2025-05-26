@@ -124,11 +124,7 @@ def render_ui():
         st.subheader("GM 管理介面")
         df = get_df()
         st.dataframe(df)
-        st.subheader("全員空閒日曆")
-        for uid in df["user_id"]:
-            with st.expander(uid):
-                display_calendar_view(uid)
-
+        
     elif selected_page == "登出":
         st.session_state.authenticated = False
         st.session_state.user_id = ""
