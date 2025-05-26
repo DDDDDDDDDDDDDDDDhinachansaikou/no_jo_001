@@ -139,19 +139,26 @@ def remove_member_from_group(user_id, group_name, target_id):
 def delete_group(group_name):
     df = get_df()
     df = ensure_group_columns(df)
+
+    # 1. 先移除所有人的 groups 和 group_members 欄位中的這個群組
     for idx, row in df.iterrows():
-        # 1. 移除 groups 欄
+        # 移除 groups 欄
         groups = set(row['groups'].split(',')) if row['groups'] else set()
         if group_name in groups:
             groups.remove(group_name)
             df.at[idx, 'groups'] = ','.join(sorted(groups))
-        # 2. 移除 group_members 欄
+        # 移除 group_members 欄
         group_map = parse_group_members(row['group_members'])
         if group_name in group_map:
             del group_map[group_name]
         df.at[idx, 'group_members'] = to_group_members_str(group_map)
+    
+    # 2. 刪除群組本身與所有活動（row_type==group 或 event 且 group_name符合）
+    df = df[~(((df['row_type'] == 'group') | (df['row_type'] == 'event')) & (df['group_name'] == group_name))]
+
     save_df(df)
-    return True, f"群組 {group_name} 已刪除"
+    return True, f"群組 {group_name} 及其活動已刪除"
+
 
 def show_group_availability(group_map):
     st.subheader("群組成員空閒時間")
