@@ -45,10 +45,39 @@ elif selected_page == "登記可用時間":
     date_range = pd.date_range(date.today(), periods=30).tolist()
 
 elif selected_page == "查詢可配對使用者":
+    st.header("查詢可配對使用者")
+    
     df = get_df()
-    display_calendar_view(target)
-    date_range = pd.date_range(date.today(), periods=30).tolist()
-    for d in selected:
+    user_id = st.session_state.get("user_id")
+
+    if user_id is None:
+        st.warning("請先登入")
+    else:
+        user_row = df[df["user_id"] == user_id]
+        if user_row.empty:
+            st.error("無法找到登入使用者")
+        else:
+            my_dates = user_row.iloc[0]["available_dates"]
+            if pd.isna(my_dates) or my_dates == "":
+                st.info("你尚未登記任何可用時間")
+            else:
+                my_dates = set(my_dates.split(","))
+                st.write(f"你的可用日期：{', '.join(my_dates)}")
+                st.subheader("以下是與你有相同可用日期的使用者：")
+
+                for i, row in df.iterrows():
+                    if row["user_id"] == user_id:
+                        continue  # 跳過自己
+
+                    other_dates = row.get("available_dates", "")
+                    if not isinstance(other_dates, str) or not other_dates.strip():
+                        continue
+
+                    overlap = set(other_dates.split(",")) & my_dates
+                    if overlap:
+                        st.markdown(f"✅ **{row['user_id']}**（共同可用日：{', '.join(sorted(overlap))}）")
+                        display_calendar_view(row["user_id"])
+
 
 elif selected_page == "送出好友申請":
     st.header("送出好友申請")
