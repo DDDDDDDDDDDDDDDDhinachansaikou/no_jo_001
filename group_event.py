@@ -46,63 +46,48 @@ def render_group_events_ui(group_name, user_id):
         return
 
     for idx, row in events_to_show.iterrows():
-        st.markdown(f"**{row['event_title']}**（{row['event_date']}）")
-        yes_list = [x for x in str(row['participants_yes']).split(",") if x]
-        no_list = [x for x in str(row['participants_no']).split(",") if x]
+    st.markdown(f"**{row['event_title']}**（{row['event_date']}）")
+    yes_list = [x for x in str(row['participants_yes']).split(",") if x]
+    no_list = [x for x in str(row['participants_no']).split(",") if x]
+    user_is_yes = user_id in yes_list
+    user_is_no = user_id in no_list
 
-        # 狀態切換（同時保證參加和不參加互斥）
-        user_is_yes = user_id in yes_list
-        user_is_no = user_id in no_list
+    col1, col2, col3, col4 = st.columns([1, 1, 2, 2])
+    with col1:
+        if row["created_by"] == user_id:
+            if st.button("取消活動", key=f"cancel_{group_name}_{idx}"):
+                delete_event(idx)
+                st.success("活動已取消")
+                st.rerun()
+    with col2:
+        if st.button("參加", key=f"join_{group_name}_{idx}"):
+            if not user_is_yes:
+                yes_list.append(user_id)
+            if user_id in no_list:
+                no_list.remove(user_id)
+            update_event_participation(idx, yes_list, no_list)
+            st.success("已標記參加")
+            st.rerun()
+    with col3:
+        if st.button("不參加", key=f"notjoin_{group_name}_{idx}"):
+            if not user_is_no:
+                no_list.append(user_id)
+            if user_id in yes_list:
+                yes_list.remove(user_id)
+            update_event_participation(idx, yes_list, no_list)
+            st.success("已標記不參加")
+            st.rerun()
+    with col4:
+        st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
+        st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
 
-        col1, col2, col3, col4 = st.columns([1, 1, 2, 2])
-        # 主辦人可取消活動
-        with col1:
-            if row["created_by"] == user_id:
-                if st.button("取消活動", key=f"cancel_{group_name}_{idx}"):
-                    delete_event(idx)
-                    st.success("活動已取消")
-                    st.rerun()
-        # 狀態切換按鈕
-        with col2:
-            if user_is_yes:
-                if st.button("退出", key=f"leave_{group_name}_{idx}"):
-                    yes_list.remove(user_id)
-                    if user_id not in no_list:
-                        no_list.append(user_id)
-                    update_event_participation(idx, yes_list, no_list)
-                    st.success("已退出活動")
-                    st.rerun()
-            else:
-                if st.button("參加", key=f"join_{group_name}_{idx}"):
-                    if user_id not in yes_list:
-                        yes_list.append(user_id)
-                    if user_id in no_list:
-                        no_list.remove(user_id)
-                    update_event_participation(idx, yes_list, no_list)
-                    st.success("已標記參加")
-                    st.rerun()
-        with col3:
-            if user_is_no:
-                if st.button("重新參加", key=f"rejoin_{group_name}_{idx}"):
-                    if user_id not in yes_list:
-                        yes_list.append(user_id)
-                    if user_id in no_list:
-                        no_list.remove(user_id)
-                    update_event_participation(idx, yes_list, no_list)
-                    st.success("已標記參加")
-                    st.rerun()
-            else:
-                if st.button("不參加", key=f"notjoin_{group_name}_{idx}"):
-                    if user_id not in no_list:
-                        no_list.append(user_id)
-                    if user_id in yes_list:
-                        yes_list.remove(user_id)
-                    update_event_participation(idx, yes_list, no_list)
-                    st.success("已標記不參加")
-                    st.rerun()
-        with col4:
-            st.markdown(f"參加：{', '.join(yes_list) if yes_list else '無'}")
-            st.markdown(f"不參加：{', '.join(no_list) if no_list else '無'}")
+    # 狀態提示：這段可以放在活動標題下，也可放按鈕區下
+    if user_is_yes:
+        st.info("你已選擇參加此活動")
+    elif user_is_no:
+        st.warning("你已選擇不參加此活動")
+    else:
+        st.markdown("尚未表態參加與否")
 
     # 自動刪除過期活動（整個 group_events）
     expired_idx = group_events[~group_events.apply(not_expired, axis=1)].index
