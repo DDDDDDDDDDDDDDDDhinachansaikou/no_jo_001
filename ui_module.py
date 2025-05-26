@@ -43,12 +43,17 @@ def render_ui():
 
     # 各分頁邏輯
     if selected_page == "註冊":
-        uid = st.text_input("新帳號")
-        pw = st.text_input("密碼", type="password")
-        if st.button("註冊"):
-            from auth import register_user
-            success, msg = register_user(uid, pw)
-            st.success(msg) if success else st.error(msg)
+    uid = st.text_input("新帳號")
+    pw = st.text_input("密碼", type="password")
+    if st.button("註冊"):
+        from auth import register_user
+        success, msg = register_user(uid, pw)
+        if success:
+            st.success(msg)
+            st.session_state.page = "登入"
+            st.rerun()
+        else:
+            st.error(msg)
 
     elif selected_page == "登入":
         uid = st.text_input("帳號")
