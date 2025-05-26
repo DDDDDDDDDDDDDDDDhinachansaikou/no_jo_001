@@ -18,4 +18,5 @@ from storage_module import get_df, save_df
 
 import pandas as pd
 from datetime import date
+st.info("畫面初始化中...")
 render_ui()
