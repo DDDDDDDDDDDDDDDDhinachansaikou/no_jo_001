@@ -51,6 +51,22 @@ elif selected_page == "查詢可配對使用者":
     for d in selected:
 
 elif selected_page == "送出好友申請":
+    st.header("送出好友申請")
+
+    target_id = st.text_input("輸入對方的使用者 ID")
+
+    if st.button("送出好友申請"):
+        if not target_id:
+            st.warning("請輸入對方 ID")
+        elif target_id == st.session_state.get("user_id"):
+            st.warning("不能對自己送出好友申請")
+        else:
+            success, msg = send_friend_request(st.session_state["user_id"], target_id)
+            if success:
+                st.success(f"已送出好友申請給 {target_id}")
+            else:
+                st.error(f"送出失敗：{msg}")
+
 
 elif selected_page == "回應好友申請":
     if not requests:
@@ -59,15 +75,32 @@ elif selected_page == "回應好友申請":
         with col2:
 
 elif selected_page == "查看好友清單":
-    if not friends:
-
-
+    st.header("好友清單")
 
     df = get_df()
-    for uid in df["user_id"]:
-            display_calendar_view(uid)
+    user_id = st.session_state.get("user_id")
+    user_row = df[df["user_id"] == user_id]
+
+    if user_row.empty:
+        st.warning("找不到使用者資料")
+    else:
+        friends_str = user_row.iloc[0].get("friends", "")
+        friends = [f for f in friends_str.split(",") if f.strip()]
+
+        if not friends:
+            st.info("你目前尚未有好友")
+        else:
+            for fid in friends:
+                st.subheader(f"好友：{fid}")
+                display_calendar_view(fid)
 
 elif selected_page == "群組管理":
+    st.header("群組管理")
+    user_id = st.session_state.get("user_id")
+
+    render_group_management_ui(user_id)
 
 elif selected_page == "登出":
-
+    st.session_state.clear()
+    st.success("你已成功登出")
+    st.rerun()
