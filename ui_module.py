@@ -47,7 +47,7 @@ def render_ui():
     pw = st.text_input("密碼", type="password")
     if st.button("註冊"):
         from auth import register_user
-        success, msg = register_user(uid, pw)
+            success, msg = register_user(uid, pw)
         if success:
             st.success(msg)
             st.session_state.page = "登入"
