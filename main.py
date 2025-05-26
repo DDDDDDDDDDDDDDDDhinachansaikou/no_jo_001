@@ -28,8 +28,18 @@ if selected_page == "註冊":
         success, msg = register_user(uid, pw)
 
 elif selected_page == "登入":
+    st.header("登入")
+
+    uid = st.text_input("使用者 ID")
+    pw = st.text_input("密碼", type="password")
+
+    if st.button("登入"):
         if authenticate_user(uid, pw):
+            st.success(f"歡迎回來，{uid}！")
+            st.session_state["user_id"] = uid
+            st.rerun()  # 重新整理頁面以更新狀態
         else:
+            st.error("帳號或密碼錯誤，請重新輸入")
 
 elif selected_page == "登記可用時間":
     date_range = pd.date_range(date.today(), periods=30).tolist()
