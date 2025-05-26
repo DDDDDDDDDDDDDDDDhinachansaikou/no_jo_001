@@ -1,11 +1,13 @@
 import streamlit as st
-from streamlit.runtime.scriptrunner import add_script_run_ctx
 import time
 
-from streamlit_extras.st_autorefresh import st_autorefresh
-st_autorefresh(interval=10000, key="auto_refresh")  # 每 10 秒刷新一次
+# 每 10 秒自動重新整理畫面
+if "last_refresh_time" not in st.session_state:
+    st.session_state.last_refresh_time = time.time()
+elif time.time() - st.session_state.last_refresh_time > 10:
+    st.session_state.last_refresh_time = time.time()
+    st.experimental_rerun()
 
-
-# 以下載入主畫面
+# 載入 UI
 from ui_module import render_ui
 render_ui()
