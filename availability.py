@@ -1,4 +1,3 @@
-
 from storage_module import get_df, save_df
 
 def update_availability(user_id, available_dates):
