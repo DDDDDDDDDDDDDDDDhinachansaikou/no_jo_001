@@ -9,6 +9,7 @@ from friend_module import (
 )
 from group_module import render_group_management_ui
 from calendar_module import display_calendar_view
+import time
 
 def render_ui():
     st.title("NO_JO")
