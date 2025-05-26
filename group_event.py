@@ -150,7 +150,7 @@ def render_group_events_ui(group_name, user_id):
                 st.rerun()
 
         # 展示名單
-        st.write("目前參加名單"):
+        st.write("目前參加名單")
         st.write("參加：", yes_list if yes_list else "尚無人參加")
         st.write("不參加：", no_list if no_list else "尚無人標記不參加")
         st.markdown("---")
