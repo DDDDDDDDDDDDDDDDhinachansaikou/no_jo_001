@@ -210,7 +210,6 @@ def render_group_management_ui(user_id):
                 if success:
                     st.success("移除完成")
                     st.info(msg)
-                    st.rerun()
                 else:
                     st.error(msg)
         else:
@@ -225,7 +224,6 @@ def render_group_management_ui(user_id):
             if success:
                 st.success("刪除完成")
                 st.info(msg)
-                st.rerun()
             else:
                 st.error(msg)
 
