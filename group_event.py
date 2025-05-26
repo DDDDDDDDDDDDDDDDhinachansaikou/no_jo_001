@@ -50,7 +50,7 @@ def render_group_events_ui(group_name, user_id):
     for idx, row in events_to_show.iterrows():
         st.markdown(f"**{row['event_title']}**（{row['event_date']}）")
         # 顯示活動概述
-        st.markdown(f"**活動概述：**{row.get('event_summary', '')}")
+        st.markdown(f"活動概述：{row.get('event_summary', '')}")
 
         yes_list = [x for x in str(row['participants_yes']).split(",") if x]
         no_list = [x for x in str(row['participants_no']).split(",") if x]
