@@ -13,13 +13,13 @@ from calendar_module import display_calendar_view
 def render_ui():
     st.title("NO_JO")
 
-    if 'authenticated' not in st.session_state:
+    if "authenticated" not in st.session_state:
         st.session_state.authenticated = False
-    if 'user_id' not in st.session_state:
+    if "user_id" not in st.session_state:
         st.session_state.user_id = ""
-    if 'page' not in st.session_state:
+    if "page" not in st.session_state:
         st.session_state.page = "登入"
-    if 'rerun_triggered' not in st.session_state:
+    if "rerun_triggered" not in st.session_state:
         st.session_state.rerun_triggered = False
 
     if st.session_state.page == "登入成功" and not st.session_state.rerun_triggered:
@@ -27,33 +27,29 @@ def render_ui():
         st.session_state.rerun_triggered = True
         st.rerun()
 
-    # 選單設置
     if st.session_state.authenticated:
         if st.session_state.user_id == "GM":
-            page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請",
-                            "查看好友清單", "群組管理", "管理介面", "登出"]
+            page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請", "查看好友清單", "群組管理", "管理介面", "登出"]
         else:
-            page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請",
-                            "查看好友清單", "群組管理", "登出"]
+            page_options = ["登記可用時間", "查詢可配對使用者", "送出好友申請", "回應好友申請", "查看好友清單", "群組管理", "登出"]
     else:
         page_options = ["登入", "註冊"]
 
     selected_page = st.sidebar.radio("功能選單", page_options)
     st.session_state.page = selected_page
 
-    # 各分頁邏輯
     if selected_page == "註冊":
         uid = st.text_input("新帳號")
         pw = st.text_input("密碼", type="password")
         if st.button("註冊"):
             from auth import register_user
-                success, msg = register_user(uid, pw)
-                if success:
-                    st.success(msg)
-                    st.session_state.page = "登入"
-                    st.rerun()
-                else:
-                    st.error(msg)
+            success, msg = register_user(uid, pw)
+            if success:
+                st.success(msg)
+                st.session_state.page = "登入"
+                st.rerun()
+            else:
+                st.error(msg)
 
     elif selected_page == "登入":
         uid = st.text_input("帳號")
